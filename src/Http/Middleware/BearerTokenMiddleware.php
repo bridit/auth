@@ -37,18 +37,13 @@ class BearerTokenMiddleware implements MiddlewareInterface
   public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
   {
 
-    try {
-      $bearerTokenValidator = new BearerTokenValidator(new AccessTokenRepository());
+    $bearerTokenValidator = new BearerTokenValidator(new AccessTokenRepository());
 
-      $request = $bearerTokenValidator
-        ->setPublicKey('oauth-public.key')
-        ->validateAuthorization($request);
+    $request = $bearerTokenValidator
+      ->setPublicKey('oauth-public.key')
+      ->validateAuthorization($request);
 
-      app()->set('request', $request);
-
-    } catch (Exception $e) {
-      throw $e;
-    }
+    app()->set('request', $request);
 
     return $handler->handle($request);
 

@@ -3,6 +3,7 @@
 namespace Brid\Auth\Validators;
 
 use Brid\Auth\Exceptions\OAuthServerException;
+use Closure;
 use DateTimeZone;
 use Lcobucci\Clock\SystemClock;
 use Lcobucci\JWT\Configuration;
@@ -110,6 +111,10 @@ class BearerTokenValidator
       throw OAuthServerException::accessDenied('Access token has been revoked');
     }
 
+    if (method_exists($request, 'setUserResolver')) {
+      $request->setUserResolver($this->getUserResolver());
+    }
+
     // Return the request with additional attributes
     return $request
       ->withAttribute('oauth_access_token_id', $claims->get('jti'))
@@ -129,4 +134,22 @@ class BearerTokenValidator
   {
     return \is_array($aud) && \count($aud) === 1 ? $aud[0] : $aud;
   }
+
+  private function getUserResolver(): Closure
+  {
+    return function($request, $guard) {
+      $userId = $request->getAttribute('oauth_user_id');
+
+      if (blank($userId)) {
+        return null;
+      }
+
+      $modelClass = config('auth.providers.users.model');
+
+      return !blank($modelClass) && class_exists($modelClass)
+        ? (new $modelClass())->find($userId)
+        : $userId;
+    };
+  }
+
 }
