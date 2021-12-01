@@ -36,6 +36,9 @@ class BearerTokenMiddleware implements MiddlewareInterface
    */
   public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
   {
+    if ($request->getMethod() === 'OPTIONS') {
+      return $handler->handle($request);
+    }
 
     $bearerTokenValidator = new BearerTokenValidator(new AccessTokenRepository());
 
@@ -46,7 +49,6 @@ class BearerTokenMiddleware implements MiddlewareInterface
     app()->set('request', $request);
 
     return $handler->handle($request);
-
   }
 
   /**
